@@ -23,7 +23,7 @@ if (!MONGODB_URI) {
 // Initialize the cache object
 // In development, use a global variable to preserve the connection across hot reloads
 // In production, the cache is scoped to this module
-let cached: MongooseCache = global.mongoose ?? {
+const cached: MongooseCache = global.mongoose ?? {
   conn: null,
   promise: null,
 };

@@ -4,11 +4,12 @@ import { IEvent } from "@/database";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.action";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-
-export const dynamic = "force-dynamic"; // ensure fresh server fetches for dynamic event pages
+import { Suspense } from "react";
 
 type EventResponse = {
   event: {
+    _id?: string;
+    slug?: string;
     description?: string | null;
     image?: string | null;
     overview?: string | null;
@@ -65,25 +66,12 @@ const EventTags = ({ tags }: { tags: string[] }) => {
   );
 };
 
-const EventDetailsPage = async ({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) => {
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const { slug } = await params;
-
-  // quick sanity
-  if (!slug) return notFound();
-
-  if (!BASE_URL) {
-    // configure NEXT_PUBLIC_BASE_URL in your environment
-    return notFound();
-  }
+const EventDetailsContent = async ({ slug }: { slug: string }) => {
+  const base = process.env.NEXT_PUBLIC_BASE_URL;
 
   // server-side fetch; avoid stale cache for dynamic event pages
   const res = await fetch(
-    `${BASE_URL}/api/events/${encodeURIComponent(slug)}`,
+    `${base ? `${base}` : ""}/api/events/${encodeURIComponent(slug)}`,
     {
       // adjust caching if you want ISR or revalidation
       cache: "no-store",
@@ -98,6 +86,7 @@ const EventDetailsPage = async ({
   if (!event || !event.description) return notFound();
 
   const {
+    _id,
     description,
     image,
     overview,
@@ -109,6 +98,7 @@ const EventDetailsPage = async ({
     tags = [],
     audience,
     organizer,
+    slug: eventSlug,
   } = event;
 
   const bookings = 10;
@@ -197,7 +187,7 @@ const EventDetailsPage = async ({
             ) : (
               <p className="text-sm">Be the first to book your spot</p>
             )}
-            <BookEvent />
+            <BookEvent eventId={String(_id ?? "")} />
           </div>
         </aside>
       </div>
@@ -212,6 +202,28 @@ const EventDetailsPage = async ({
         </div>
       </div>
     </section>
+  );
+};
+
+async function EventDetailsContentFromParams({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  if (!slug) return notFound();
+  return <EventDetailsContent slug={slug} />;
+}
+
+const EventDetailsPage = ({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) => {
+  return (
+    <Suspense fallback={<div>Loading event...</div>}>
+      <EventDetailsContentFromParams params={params} />
+    </Suspense>
   );
 };
 
