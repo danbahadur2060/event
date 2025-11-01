@@ -205,6 +205,12 @@ const EventDetailsContent = async ({ slug }: { slug: string }) => {
   );
 };
 
+/**
+ * Resolve the route params and render the EventDetailsContent for the provided slug.
+ *
+ * @param params - A promise that resolves to an object containing the route `slug`.
+ * @returns A React element that renders EventDetailsContent for the resolved `slug`; if `slug` is missing, triggers a 404 via `notFound()`.
+ */
 async function EventDetailsContentFromParams({
   params,
 }: {
