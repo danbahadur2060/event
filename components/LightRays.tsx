@@ -270,10 +270,10 @@ void main() {
 
       const uniforms = {
         iTime: { value: 0 },
-        iResolution: { value: [1, 1] },
+        iResolution: { value: [1, 1] as [number, number] },
 
-        rayPos: { value: [0, 0] },
-        rayDir: { value: [0, 1] },
+        rayPos: { value: [0, 0] as [number, number] },
+        rayDir: { value: [0, 1] as [number, number] },
 
         raysColor: { value: hexToRgb(raysColor) },
         raysSpeed: { value: raysSpeed },
@@ -282,7 +282,7 @@ void main() {
         pulsating: { value: pulsating ? 1.0 : 0.0 },
         fadeDistance: { value: fadeDistance },
         saturation: { value: saturation },
-        mousePos: { value: [0.5, 0.5] },
+        mousePos: { value: [0.5, 0.5] as [number, number] },
         mouseInfluence: { value: mouseInfluence },
         noiseAmount: { value: noiseAmount },
         distortion: { value: distortion },
@@ -310,11 +310,11 @@ void main() {
         const w = wCSS * dpr;
         const h = hCSS * dpr;
 
-        uniforms.iResolution.value = [w, h];
+        uniforms.iResolution.value = [w, h] as [number, number];
 
         const { anchor, dir } = getAnchorAndDir(raysOrigin, w, h);
-        uniforms.rayPos.value = anchor;
-        uniforms.rayDir.value = dir;
+        uniforms.rayPos.value = anchor as [number, number];
+        uniforms.rayDir.value = dir as [number, number];
       };
 
       const loop = (t: number) => {
@@ -337,7 +337,7 @@ void main() {
           uniforms.mousePos.value = [
             smoothMouseRef.current.x,
             smoothMouseRef.current.y,
-          ];
+          ] as [number, number];
         }
 
         try {

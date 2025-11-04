@@ -1,4 +1,5 @@
 import BookEvent from "@/components/BookEvent";
+import BuyTickets from "@/components/BuyTickets";
 import EventCard from "@/components/EventCard";
 import { IEvent } from "@/database";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.action";
@@ -98,7 +99,6 @@ const EventDetailsContent = async ({ slug }: { slug: string }) => {
     tags = [],
     audience,
     organizer,
-    slug: eventSlug,
   } = event;
 
   const bookings = 10;
@@ -177,7 +177,9 @@ const EventDetailsContent = async ({ slug }: { slug: string }) => {
 
         {/* right side - Booking Form */}
 
-        <aside className="booking w-80">
+        <aside className="booking w-80 space-y-4">
+          <BuyTickets eventId={String(_id ?? "")} />
+          
           <div className="signup-card">
             <h2>Book Your Spot</h2>
             {bookings > 0 ? (

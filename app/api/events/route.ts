@@ -1,75 +1,85 @@
 import { Event } from "@/database";
 import connectDB from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+
+type EventInput = {
+  title: string;
+  description: string;
+  overview: string;
+  image: string;
+  venue: string;
+  location: string;
+  date: string;
+  time: string;
+  mode: string;
+  audience: string;
+  agenda: string[];
+  organizer: string;
+  tags: string[];
+  // optional new fields
+  orgId?: string;
+  status?: "draft" | "published" | "archived";
+  privacy?: "public" | "private";
+  settings?: Record<string, any>;
+  theme?: Record<string, any>;
+  seo?: Record<string, any>;
+  scheduledPublishAt?: string | null;
+};
 
 export async function POST(req: NextRequest) {
   try {
-    await connectDB();
-
-    const formData = await req.formData();
-    let event;
-    try {
-      event = Object.fromEntries(formData.entries());
-    } catch (formError) {
-      return NextResponse.json(
-        {
-          message: "Invalid form data",
-          error: formError instanceof Error ? formError.message : "Unknown",
-        },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as SessionUser | undefined)?.role;
+    if (!role || !["organizer", "admin", "superadmin"].includes(role)) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const file = formData.get("image") as File;
-    if (!file)
+    await connectDB();
+
+    const contentType = req.headers.get("content-type") || "";
+
+    // Allow either multipart (with file) or JSON (with image URL)
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const event: Partial<EventInput> = Object.fromEntries(formData.entries()) as Partial<EventInput>;
+
+      const file = formData.get("image") as File | null;
+      if (file && file.size > 0) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const imageUrl = await uploadToCloudinary(buffer);
+        (event as EventInput).image = imageUrl;
+      }
+
+      const tags = JSON.parse(String(formData.get("tags") || "[]"));
+      const agenda = JSON.parse(String(formData.get("agenda") || "[]"));
+
+      const createdEvent = await Event.create({
+        ...event,
+        tags,
+        agenda,
+      });
+
       return NextResponse.json(
-        {
-          message: "Image file is required",
-        },
-        { status: 400 }
+        { message: "Event created successfully", event: createdEvent },
+        { status: 201 }
       );
-
-    const tags = JSON.parse(formData.get("tags") as string);
-    const agenda = JSON.parse(formData.get("agenda") as string);
-
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          { resource_type: "image", folder: "Devevent" },
-          (error, results) => {
-            if (error) return reject(error);
-            resolve(results);
-          }
-        )
-        .end(buffer);
-    });
-
-    event.image = (uploadResult as { secure_url: string }).secure_url;
-
-    const createdEvent = await Event.create({
-      ...event,
-      tags: tags,
-      agenda: agenda,
-    });
-
-    return NextResponse.json(
-      {
-        message: "Event created successfully",
-        event: createdEvent,
-      },
-      { status: 201 }
-    );
+    } else {
+      const body = await req.json();
+      const createdEvent = await Event.create(body);
+      return NextResponse.json(
+        { message: "Event created successfully", event: createdEvent },
+        { status: 201 }
+      );
+    }
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      {
-        message: "Event creation Failed",
-        error: error instanceof Error ? error.message : "Unknown",
-      },
+      { message: "Event creation Failed", error: error instanceof Error ? error.message : "Unknown" },
       { status: 500 }
     );
   }
