@@ -30,4 +30,4 @@ const CouponSchema = new Schema<Coupon>(
 const CouponModel: Model<Coupon> = (models.Coupon as Model<Coupon>) || model<Coupon>("Coupon", CouponSchema);
 
 export default CouponModel;
-export type { Coupon as ICoupon, CouponType };
+export type { Coupon as ICoupon };

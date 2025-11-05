@@ -5,14 +5,16 @@ import LightRays from "@/components/LightRays";
 import Navbar from "@/components/Navbar";
 import SessionProvider from "@/components/SessionProvider";
 
-const schibstedGrotest = Schibsted_Grotesk({
-  variable: "--font-schibsted-grotesk",
+const schibstedGrotesk = Schibsted_Grotesk({
   subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-schibsted-grotesk",
 });
 
 const martianMono = Martian_Mono({
-  variable: "--font-martian-mono",
   subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-martian-mono",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${schibstedGrotest.variable} ${martianMono.variable} min-h-screen antialiased`}
+        className={`${schibstedGrotesk.variable} ${martianMono.variable} min-h-screen antialiased`}
       >
         <SessionProvider>
           <Navbar />

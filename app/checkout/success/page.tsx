@@ -23,7 +23,6 @@ function SuccessContent({ searchParams }: { searchParams: Promise<{ session_id?:
 export default function SuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   return (
     <Suspense fallback={<div className="p-6">Loading...</div>}>
-      {/* @ts-expect-error Async Server Component */}
       <SuccessContent searchParams={searchParams} />
     </Suspense>
   );

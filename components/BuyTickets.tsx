@@ -144,7 +144,7 @@ export default function BuyTickets({ eventId }: { eventId: string }) {
                 <span className="w-8 text-center">{selectedQty}</span>
                 <button
                   onClick={() => handleQuantityChange(ticket._id, selectedQty + 1)}
-                  disabled={!available || (ticket.perUserLimit && selectedQty >= ticket.perUserLimit)}
+                  disabled={!available || (ticket.perUserLimit != null && selectedQty >= ticket.perUserLimit)}
                   className="bg-dark-200 px-3 py-1 rounded disabled:opacity-50"
                 >
                   +

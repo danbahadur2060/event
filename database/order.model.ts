@@ -49,4 +49,4 @@ const OrderSchema = new Schema<Order>(
 const OrderModel: Model<Order> = (models.Order as Model<Order>) || model<Order>("Order", OrderSchema);
 
 export default OrderModel;
-export type { Order as IOrder, OrderStatus, OrderItem };
+export type { Order as IOrder };

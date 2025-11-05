@@ -407,7 +407,6 @@ export default function AdminPage({ searchParams }: { searchParams: Promise<{ ta
   return (
     <Suspense fallback={<div className="p-6">Loading admin…</div>}>
       {/* Pass searchParams via URL; AdminContent reads it */}
-      {/* @ts-expect-error Async Server Component */}
       <AdminContent searchParams={searchParams} />
     </Suspense>
   );
