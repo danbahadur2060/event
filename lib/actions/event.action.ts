@@ -12,7 +12,7 @@ export const getSimilarEventsBySlug = async (slug: string) => {
       _id: { $ne: event?._id },
       tags: { $in: event?.tags },
     }).lean();
-  } catch (error) {
+  } catch {
     return [];
   }
 };

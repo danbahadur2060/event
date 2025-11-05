@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import { Event, type IEvent } from "@/database";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth";
 
 /**
  * Shape returned to clients (stringified _id and ISO dates)
@@ -80,5 +83,66 @@ export async function GET(
       { error: { message: "Unexpected error while fetching event" } },
       { status: 500 }
     );
+  }
+}
+
+export async function PUT(req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as SessionUser | undefined)?.role;
+    if (!role || !["organizer", "admin", "superadmin"].includes(role)) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    await connectDB();
+    const { slug } = await context.params;
+    const body = await req.json();
+    const updated = await Event.findOneAndUpdate({ slug }, body, { new: true });
+    if (!updated) return NextResponse.json({ message: "Not found" }, { status: 404 });
+    return NextResponse.json({ message: "Updated", event: updated }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as SessionUser | undefined)?.role;
+    if (!role || !["organizer", "admin", "superadmin"].includes(role)) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    await connectDB();
+    const { slug } = await context.params;
+    const body = await req.json();
+    
+    // Only allow specific fields to be patched
+    const allowedUpdates: any = {};
+    if (body.status) allowedUpdates.status = body.status;
+    
+    const updated = await Event.findOneAndUpdate({ slug }, allowedUpdates, { new: true });
+    if (!updated) return NextResponse.json({ message: "Not found" }, { status: 404 });
+    return NextResponse.json({ message: "Updated", event: updated }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
+  }
+}
+
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ slug: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    const role = (session?.user as SessionUser | undefined)?.role;
+    if (!role || !["organizer", "admin", "superadmin"].includes(role)) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    await connectDB();
+    const { slug } = await context.params;
+    const deleted = await Event.findOneAndDelete({ slug });
+    if (!deleted) return NextResponse.json({ message: "Not found" }, { status: 404 });
+    return NextResponse.json({ message: "Deleted" }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Error", error }, { status: 500 });
   }
 }

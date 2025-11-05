@@ -1,4 +1,4 @@
-import { Schema, model, models, Model, HydratedDocument } from "mongoose";
+import { Schema, model, models, Model, HydratedDocument, Types } from "mongoose";
 
 // Event domain type with runtime-backed timestamps
 export interface Event {
@@ -16,6 +16,30 @@ export interface Event {
   agenda: string[];
   organizer: string;
   tags: string[];
+  // New fields
+  orgId?: Types.ObjectId | null; // owning organization
+  status: "draft" | "published" | "archived";
+  privacy?: "public" | "private";
+  settings?: {
+    timezone?: string;
+    currency?: string;
+    locale?: string;
+    capacity?: number | null;
+    waitlistEnabled?: boolean;
+  };
+  theme?: {
+    primaryColor?: string;
+    logoUrl?: string;
+    customDomain?: string;
+    whiteLabel?: boolean;
+  };
+  seo?: {
+    title?: string;
+    description?: string;
+    ogImage?: string;
+  };
+  publishedAt?: Date | null;
+  scheduledPublishAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,15 +62,15 @@ const normalizeTime = (value: string): string => {
   // 24h: HH:mm or H:mm or HH:mm:ss
   const m24 = v.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
   if (m24) {
-    const hh = String(Number(m24[1]).toString().padStart(2, "0"));
+    const hh = String(m24[1]).padStart(2, "0");
     const mm = m24[2];
     return `${hh}:${mm}`; // HH:mm
   }
-  // 12h: h:mm AM/PM
-  const m12 = v.match(/^(0?\d|1[0-2]):([0-5]\d)\s*([AP]M)$/i);
+  // 12h: h:mm AM/PM or h AM/PM
+  const m12 = v.match(/^(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*([AP]M)$/i);
   if (m12) {
     let hh = Number(m12[1]);
-    const mm = m12[2];
+    const mm = m12[2] ? m12[2] : "00";
     const ap = m12[3].toUpperCase();
     if (ap === "AM") {
       hh = hh === 12 ? 0 : hh;
@@ -153,6 +177,29 @@ const EventSchema = new Schema<Event>(
         message: "Tags must be a non-empty array of strings",
       },
     },
+    orgId: { type: Schema.Types.ObjectId, ref: "Organization", required: false, index: true },
+    status: { type: String, enum: ["draft", "published", "archived"], default: "draft", index: true },
+    privacy: { type: String, enum: ["public", "private"], default: "public" },
+    settings: {
+      timezone: { type: String },
+      currency: { type: String, default: "USD" },
+      locale: { type: String, default: "en-US" },
+      capacity: { type: Number, default: null },
+      waitlistEnabled: { type: Boolean, default: false },
+    },
+    theme: {
+      primaryColor: { type: String },
+      logoUrl: { type: String },
+      customDomain: { type: String },
+      whiteLabel: { type: Boolean, default: false },
+    },
+    seo: {
+      title: { type: String },
+      description: { type: String },
+      ogImage: { type: String },
+    },
+    publishedAt: { type: Date, default: null },
+    scheduledPublishAt: { type: Date, default: null },
   },
   { timestamps: true, versionKey: false }
 );
@@ -176,6 +223,11 @@ EventSchema.pre("save", function (this: EventDocument, next) {
     // Normalize time to HH:mm (24-hour)
     if (this.isModified("time")) {
       this.time = normalizeTime(this.time);
+    }
+
+    // PublishedAt auto-set when status transitions to published
+    if (this.isModified("status") && this.status === "published" && !this.publishedAt) {
+      this.publishedAt = new Date();
     }
 
     next();

@@ -1,8 +1,17 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import { useSession, signOut } from "next-auth/react";
+import type { SessionUser } from "@/lib/auth";
 
-const Navbar = () => {
+export default function Navbar() {
+  const { data: session } = useSession();
+  const user = session?.user as SessionUser | undefined;
+
+  const handleSignOut = () => {
+    signOut();
+  };
+
   return (
     <header>
       <nav>
@@ -13,12 +22,21 @@ const Navbar = () => {
         <ul>
           <Link href="/">Home</Link>
           <Link href="/events">Events</Link>
-
-          <Link href="/contact">Contact Event</Link>
+          {user ? (
+            <>
+              <Link href="/dashboard">Dashboard</Link>
+              <button onClick={handleSignOut} className="underline">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">Login</Link>
+              <Link href="/register">Register</Link>
+            </>
+          )}
         </ul>
       </nav>
     </header>
   );
-};
-
-export default Navbar;
+}

@@ -4,6 +4,7 @@ import { Schema, model, models, Model, HydratedDocument, Types } from 'mongoose'
 export interface Booking {
   eventId: Types.ObjectId;
   email: string;
+  reminderSentAt?: Date; // track automated reminder
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +35,7 @@ const BookingSchema = new Schema<Booking>(
         message: 'Invalid email format',
       },
     },
+    reminderSentAt: { type: Date, required: false },
   },
   { timestamps: true, versionKey: false }
 );
