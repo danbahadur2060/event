@@ -1,6 +1,8 @@
 import EventCard from "@/components/EventCard";
 import { allEvents as staticAll } from "@/lib/events";
 
+// Mark this route as dynamic so it isn't prerendered at build time
+
 const EventsPage = async () => {
   // Try to fetch dynamic events from the API; fall back to static list on failure
   const base = process.env.NEXT_PUBLIC_BASE_URL;
