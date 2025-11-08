@@ -106,6 +106,106 @@
   box-shadow: 0px 4px 40px 0px #00000066;
 }
 
+/* Hero Section Custom Animations */
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+  }
+  to {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes scroll-down {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@utility animate-fade-in-down {
+  animation: fade-in-down 0.6s ease-out forwards;
+}
+
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+@utility animate-draw-line {
+  animation: draw-line 1.5s ease-out forwards;
+}
+
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@utility animate-scroll-down {
+  animation: scroll-down 2s ease-in-out infinite;
+}
+
+@utility delay-200 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+@utility delay-300 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+@utility delay-500 {
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+@utility delay-1000 {
+  animation-delay: 1s;
+}
+
+@utility delay-2000 {
+  animation-delay: 2s;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

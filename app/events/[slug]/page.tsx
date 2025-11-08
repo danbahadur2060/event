@@ -2,6 +2,7 @@ import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
 import { IEvent } from "@/database";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.action";
+import { allEvents } from "@/lib/events";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -67,21 +68,44 @@ const EventTags = ({ tags }: { tags: string[] }) => {
 };
 
 const EventDetailsContent = async ({ slug }: { slug: string }) => {
-  const base = process.env.NEXT_PUBLIC_BASE_URL;
+  // First try to resolve from static events to avoid API 404s in local/dev
+  const staticEvent = allEvents.find((e) => e.slug === slug);
 
-  // server-side fetch; avoid stale cache for dynamic event pages
-  const res = await fetch(
-    `${base ? `${base}` : ""}/api/events/${encodeURIComponent(slug)}`,
-    {
-      // adjust caching if you want ISR or revalidation
-      cache: "no-store",
-    }
-  );
+  let event: EventResponse["event"] | null = null;
 
-  if (!res.ok) return notFound();
+  if (staticEvent) {
+    event = {
+      _id: "",
+      slug: staticEvent.slug,
+      description: "Event details coming soon.",
+      image: staticEvent.image ?? null,
+      overview: null,
+      date: staticEvent.date ?? null,
+      time: staticEvent.time ?? null,
+      location: staticEvent.location ?? null,
+      mode: null,
+      agenda: [],
+      tags: [],
+      audience: null,
+      organizer: null,
+    };
+  } else {
+    const base = process.env.NEXT_PUBLIC_BASE_URL;
 
-  const data: EventResponse = await res.json();
-  const event = data?.event;
+    // server-side fetch; avoid stale cache for dynamic event pages
+    const res = await fetch(
+      `${base ? `${base}` : ""}/api/events/${encodeURIComponent(slug)}`,
+      {
+        // adjust caching if you want ISR or revalidation
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) return notFound();
+
+    const data: EventResponse = await res.json();
+    event = data?.event;
+  }
 
   if (!event || !event.description) return notFound();
 
